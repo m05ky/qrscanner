@@ -125,6 +125,7 @@ struct DrawerLayer: View {
                     .gesture(openDrag)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .allowsHitTesting(model.drawerOpen || drag != 0 || model.path.isEmpty)
     }
 }
