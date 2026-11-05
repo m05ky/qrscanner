@@ -1,0 +1,5 @@
+"NSCameraUsageDescription" = "QR Scanner verwendet die Kamera, um QR-Codes und Barcodes zu scannen.";
+"NSPhotoLibraryAddUsageDescription" = "QR Scanner speichert erstellte Codes in deiner Fotomediathek, wenn du auf Speichern tippst.";
+"NSCalendarsUsageDescription" = "QR Scanner fügt gescannte Termine deinem Kalender hinzu.";
+"NSCalendarsFullAccessUsageDescription" = "QR Scanner fügt gescannte Termine deinem Kalender hinzu.";
+"NSCalendarsWriteOnlyAccessUsageDescription" = "QR Scanner fügt gescannte Termine deinem Kalender hinzu.";

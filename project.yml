@@ -1,0 +1,61 @@
+name: QRScanner
+options:
+  bundleIdPrefix: com.allcodes
+  deploymentTarget:
+    iOS: "16.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+  generateEmptyDirectories: false
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+packages:
+  ZXingCpp:
+    url: https://github.com/zxing-cpp/zxing-cpp.git
+    exactVersion: 3.1.1
+targets:
+  QRScanner:
+    type: application
+    platform: iOS
+    sources:
+      - path: QRScanner
+        excludes:
+          - Info.plist
+    dependencies:
+      - package: ZXingCpp
+    info:
+      path: QRScanner/Info.plist
+      properties:
+        CFBundleDisplayName: QR Scanner
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, de]
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIRequiredDeviceCapabilities: [arm64]
+        ITSAppUsesNonExemptEncryption: false
+        UIAppFonts:
+          - Inter-Regular.otf
+          - Inter-Medium.otf
+          - Inter-SemiBold.otf
+          - Inter-Bold.otf
+        NSCameraUsageDescription: QR Scanner uses the camera to scan QR codes and barcodes.
+        NSPhotoLibraryAddUsageDescription: QR Scanner saves generated codes to your photo library when you tap Save.
+        NSContactsUsageDescription: QR Scanner adds scanned contact cards to your contacts.
+        NSCalendarsUsageDescription: QR Scanner adds scanned events to your calendar.
+        NSCalendarsFullAccessUsageDescription: QR Scanner adds scanned events to your calendar.
+        NSCalendarsWriteOnlyAccessUsageDescription: QR Scanner adds scanned events to your calendar.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.allcodes.scan
+        PRODUCT_NAME: QRScanner
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: QRScanner/Info.plist
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGN_IDENTITY: ""
+        DEVELOPMENT_TEAM: ""
