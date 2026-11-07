@@ -68,65 +68,89 @@ private struct DrawerEntry: Identifiable {
 
 struct DrawerLayer: View {
     @EnvironmentObject var model: AppModel
-    @State private var drag: CGFloat = 0
+    /// 0 = closed, 1 = open. Follows the finger while dragging, then a spring carries on from the release speed.
+    @State private var progress: CGFloat = 0
+    @State private var targetOpen = false
+    @State private var dragStart: CGFloat?
+    @State private var lastX: CGFloat = 0
+    @State private var lastTime: Date = Date()
+    @State private var velocity: CGFloat = 0
 
     private let width: CGFloat = 304
 
-    private var offsetX: CGFloat {
-        let base: CGFloat = model.drawerOpen ? 0 : -width
-        return min(0, max(-width, base + drag))
-    }
-
-    private var scrimOpacity: Double {
-        return Double(1 + offsetX / width) * 0.4
-    }
-
-    private func settle(open: Bool) {
-        withAnimation(.easeOut(duration: 0.22)) {
-            drag = 0
-            model.drawerOpen = open
+    /// Moves the menu to open / closed. `velocity` is in menu widths per second (positive = opening).
+    private func settle(open: Bool, velocity: CGFloat) {
+        targetOpen = open
+        let target: CGFloat = open ? 1 : 0
+        let distance = target - progress
+        let relative: Double = abs(distance) > 0.001 ? Double(velocity / distance) : 0
+        let stiffness = 320.0
+        withAnimation(.interpolatingSpring(mass: 1, stiffness: stiffness, damping: 2 * stiffness.squareRoot(), initialVelocity: relative)) {
+            progress = target
         }
+        if model.drawerOpen != open { model.drawerOpen = open }
     }
 
-    private var openDrag: some Gesture {
+    private var menuDrag: some Gesture {
         DragGesture(minimumDistance: 8)
-            .onChanged { v in drag = max(0, min(width, v.translation.width)) }
-            .onEnded { v in settle(open: v.translation.width > width * 0.3 || v.predictedEndTranslation.width > width * 0.7) }
-    }
-
-    private var closeDrag: some Gesture {
-        DragGesture(minimumDistance: 8)
-            .onChanged { v in drag = min(0, max(-width, v.translation.width)) }
-            .onEnded { v in settle(open: !(v.translation.width < -width * 0.25 || v.predictedEndTranslation.width < -width * 0.6)) }
+            .onChanged { v in
+                if dragStart == nil {
+                    dragStart = progress
+                    lastX = v.translation.width
+                    lastTime = v.time
+                    velocity = 0
+                }
+                let start = dragStart ?? 0
+                let next = min(1, max(0, start + v.translation.width / width))
+                // No animation here: this also cancels a spring that is still running, so the menu can be caught.
+                var tx = Transaction()
+                tx.disablesAnimations = true
+                withTransaction(tx) { progress = next }
+                let dt = CGFloat(v.time.timeIntervalSince(lastTime))
+                if dt > 0.004 {
+                    let instant = (v.translation.width - lastX) / width / dt
+                    velocity = velocity * 0.6 + instant * 0.4
+                    lastX = v.translation.width
+                    lastTime = v.time
+                }
+            }
+            .onEnded { _ in
+                dragStart = nil
+                let projected = progress + velocity * 0.18
+                settle(open: projected > 0.5, velocity: velocity)
+            }
     }
 
     var body: some View {
         ZStack(alignment: .leading) {
-            if scrimOpacity > 0.001 {
-                Color.black.opacity(scrimOpacity)
+            if progress > 0.001 {
+                Color.black.opacity(0.4 * Double(progress))
                     .ignoresSafeArea()
-                    .onTapGesture { settle(open: false) }
-                    .gesture(closeDrag)
+                    .onTapGesture { settle(open: false, velocity: 0) }
+                    .gesture(menuDrag)
             }
             DrawerView()
                 .frame(width: width)
                 .frame(maxHeight: .infinity)
                 .background(Palette.background.ignoresSafeArea())
                 .clipShape(RoundedCornerShape(radius: 28, corners: [.topRight, .bottomRight]))
-                .offset(x: offsetX)
-                .gesture(closeDrag)
-            if !model.drawerOpen && model.path.isEmpty {
+                .offset(x: -(1 - progress) * width)
+                .gesture(menuDrag)
+            if progress < 0.001 && model.path.isEmpty {
                 // Swipe in from the left edge to open the menu
                 Color.clear
                     .frame(width: 22)
                     .frame(maxHeight: .infinity)
                     .padding(.top, 130)
                     .contentShape(Rectangle())
-                    .gesture(openDrag)
+                    .gesture(menuDrag)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .allowsHitTesting(model.drawerOpen || drag != 0 || model.path.isEmpty)
+        .allowsHitTesting(model.drawerOpen || progress > 0.001 || model.path.isEmpty)
+        .onChange(of: model.drawerOpen) { open in
+            if open != targetOpen { settle(open: open, velocity: 0) }
+        }
     }
 }
 
@@ -201,7 +225,7 @@ struct DrawerView: View {
         let selected = e.target != nil && e.target == model.top
         return Button {
             if let t = e.target {
-                withAnimation(.easeOut(duration: 0.22)) { model.go(t) }
+                model.go(t)
             } else {
                 model.pickImage()
             }
