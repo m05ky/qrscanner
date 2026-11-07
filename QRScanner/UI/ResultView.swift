@@ -87,11 +87,11 @@ private struct ResultBody: View {
     private var capturedImages: some View {
         HStack(spacing: 12) {
             if let f = frameImage {
-                tile(f, background: Color.black, label: L.t("result_frame"), padding: 0)
+                tile(f, background: Palette.surface, label: L.t("result_frame"), padding: 0)
                     .frame(maxWidth: .infinity)
             }
             if let c = cropImage {
-                tile(c, background: Color.white, label: L.t("result_code"), padding: 6)
+                tile(c, background: Palette.surface, label: L.t("result_code"), padding: 6)
                     .frame(width: 128)
             }
         }
